@@ -1,4 +1,4 @@
-import { configLoad } from './config.js';
+importScripts('config.js');
 
 const ALARM_NAME = 'processQueue';
 let globalQueue = new Set();

@@ -19,8 +19,8 @@ function save() {
 
 function load() {
     configLoad(function(config) {
-        document.getElementById("ignorepatterns").textContent = config.ignorePatterns.filter(isNotBlankString).join("\n");
-        document.getElementById("urlpatterns").textContent = config.urlPatterns.filter(isNotBlankString).join("\n");
+        document.getElementById("ignorepatterns").value = config.ignorePatterns.filter(isNotBlankString).join("\n");
+        document.getElementById("urlpatterns").value = config.urlPatterns.filter(isNotBlankString).join("\n");
     })
 }
 function setup() {
