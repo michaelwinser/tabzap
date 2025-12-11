@@ -5,6 +5,7 @@ let globalQueue = new Set();
 let globalConfig;
 
 function onCompleted(details) {
+    if (!globalConfig) return;
     if (details.frameId != 0 || !details.url || isIgnoredUrl(details.url)) {
         return;
     }
@@ -13,6 +14,10 @@ function onCompleted(details) {
 }
 
 function onClicked(tab) {
+    if (!globalConfig) {
+        console.log("Config not loaded yet");
+        return;
+    }
     if (globalQueue.size > 0) {
         // During countdown: cancel pending removals
         chrome.alarms.clear(ALARM_NAME);
