@@ -64,7 +64,7 @@ function removeDuplicateTabs(tab) {
 
     chrome.tabs.query({ windowId: tab.windowId }, function(tabs) {
         var duplicates = tabs.filter(function(potentialDupTab) {
-            if (tab.id == potentialDupTab.id || tab.pinned || tab.status != "complete") {
+            if (tab.id == potentialDupTab.id || tab.pinned) {
                 return false;
             }
 
