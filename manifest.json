@@ -1,30 +1,29 @@
 {
-    "manifest_version": 2,
+    "manifest_version": 3,
     "name": "tabzap",
-    "version": "1.8",
+    "version": "1.9",
     "background": {
-        "scripts":[
-            "config.js",
-            "background.js"
-        ]
+        "service_worker": "background.js",
+        "type": "module"
     },
-    "browser_action": {
+    "action": {
         "default_icon": "icon48.png"
     },
-
     "options_ui": {
         "page": "options.html"
     },
-
     "icons": {
         "16": "icon16.png",
         "48": "icon48.png",
         "128": "icon128.png"
     },
     "permissions": [
-        "tabs", "notifications", "webNavigation", "storage"
+        "tabs", "notifications", "webNavigation", "storage", "alarms"
     ],
     "web_accessible_resources": [
-        "icon48.png"
+        {
+            "resources": ["icon48.png"],
+            "matches": ["<all_urls>"]
+        }
     ]
 }

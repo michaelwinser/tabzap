@@ -31,5 +31,4 @@ function setup() {
     load();
 }
 
-alert("woot");
 document.addEventListener('DOMContentLoaded', setup);

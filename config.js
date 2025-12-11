@@ -35,3 +35,6 @@ function configLoad(fn) {
 function configSave(source) {
     chrome.storage.sync.set(source);
 }
+
+// ES module exports for service worker
+export { configGetEmpty, configGetDefaults, configRestoreDefault, configLoad, configSave };

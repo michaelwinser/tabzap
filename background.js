@@ -1,8 +1,8 @@
-var globalTimer;
-var globalQueue = new Set();
-var globalCount = 0;
+import { configLoad } from './config.js';
 
-var globalConfig;
+const ALARM_NAME = 'processQueue';
+let globalQueue = new Set();
+let globalConfig;
 
 function onCompleted(details) {
     if (details.frameId != 0 || !details.url || isIgnoredUrl(details.url)) {
@@ -13,10 +13,8 @@ function onCompleted(details) {
 }
 
 function onClicked(tab) {
-    if (globalTimer) {
-        window.clearTimeout(globalTimer);
-        globalTimer = null;
-    }
+    chrome.alarms.clear(ALARM_NAME);
+    globalQueue.clear();
     clearBadge();
 }
 
@@ -29,7 +27,7 @@ function removeDuplicateTabs(tab) {
 
     var urlForComparison = getUrlForComparison(tab.url);
 
-    chrome.tabs.getAllInWindow(tab.windowId, function(tabs) {
+    chrome.tabs.query({ windowId: tab.windowId }, function(tabs) {
         var duplicates = tabs.filter(function(potentialDupTab) {
             if (tab.id == potentialDupTab.id || tab.pinned || tab.status != "complete") {
                 return false;
@@ -40,17 +38,10 @@ function removeDuplicateTabs(tab) {
 
         removeTabs(duplicates);
     })
-
-}
-
-function logDuplicateTabs(tabs) {
-    tabs.forEach(function(tab) {
-        console.log("duplicate tab %s", tab.url);
-    })
 }
 
 function clearBadge() {
-    chrome.browserAction.setBadgeText({text: ""});
+    chrome.action.setBadgeText({text: ""});
 }
 
 function setBadge(count) {
@@ -58,20 +49,19 @@ function setBadge(count) {
     if (count == 0) {
         textCount = "";
     }
-    chrome.browserAction.setBadgeText({text: textCount})    
+    chrome.action.setBadgeText({text: textCount})
 }
 
 function updateBadge() {
     if (globalQueue.size > 0) {
-        chrome.browserAction.setBadgeText({text: globalQueue.size.toString()})
+        chrome.action.setBadgeText({text: globalQueue.size.toString()})
     }
     else {
-        chrome.browserAction.setBadgeText({text: ""})
+        chrome.action.setBadgeText({text: ""})
     }
 }
-function removeTabs(tabs) {
-    var tabIds = tabs.map(function(tab) { return tab.id});
 
+function removeTabs(tabs) {
     tabs.forEach(function(tab) {
         globalQueue.add(tab.id)
     })
@@ -80,11 +70,9 @@ function removeTabs(tabs) {
 
     // If a timer is already pending, clear it and start the count again.
     // As long as the user keeps creating tabs we'll defer closing existing ones.
-    if (globalTimer) {
-        window.clearTimeout(globalTimer);
-        globalTimer = null;
-    }
-    globalTimer = window.setTimeout(processGlobalQueue, 5000);
+    chrome.alarms.clear(ALARM_NAME, () => {
+        chrome.alarms.create(ALARM_NAME, { delayInMinutes: 5 / 60 }); // 5 seconds
+    });
 }
 
 function processGlobalQueue() {
@@ -94,33 +82,12 @@ function processGlobalQueue() {
         updateBadge();
     })
 }
-function showNotification(tabs, timer) {
-    options = {
-        type: 'progress',
-        iconUrl: 'icon48.png',
-        title: 'Removing Tabs',
-        message: "Click",
-        isClickable: true,
-        progress: 30
-    }
-    chrome.notifications.create(null, options, function(id) {
-        chrome.notifications.onClicked.addListener(function(nId) {
-            if (id == nId) {
-                console.log("clicked on the notification");
-            }
-        })
-        chrome.notifications.onClosed.addListener(function(nId) {
-            if (id == nId) {
-                console.log("closed the notification");
-            }
-        })
-    });
-}
+
 function getUrlForComparison(url) {
     var i;
     var urlForComparison = url;
     for (i = 0 ; i < globalConfig.urlPatterns.length ; i++) {
-        match = url.match(globalConfig.urlPatterns[i]);
+        let match = url.match(globalConfig.urlPatterns[i]);
 
         if (match) {
             urlForComparison = match[0];
@@ -128,13 +95,12 @@ function getUrlForComparison(url) {
         }
     }
 
-//    console.log("getUrlForComparison(%s) -> %s", url, urlForComparison);
     return urlForComparison;
 }
+
 function isIgnoredUrl(url) {
     return !!globalConfig.ignorePatterns.find(function(re) { return re.test(url)});
 }
-
 
 function onStorageChanged() {
     configLoad(function(loadedConfig){
@@ -144,7 +110,13 @@ function onStorageChanged() {
         globalConfig = loadedConfig;
     });
 }
+
 chrome.storage.onChanged.addListener(onStorageChanged);
 chrome.webNavigation.onCompleted.addListener(onCompleted);
-chrome.browserAction.onClicked.addListener(onClicked);
+chrome.action.onClicked.addListener(onClicked);
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === ALARM_NAME) {
+        processGlobalQueue();
+    }
+});
 onStorageChanged(); // Force the initial load of config
