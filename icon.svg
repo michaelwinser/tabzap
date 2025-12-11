@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <!-- Blue background -->
+  <rect width="48" height="48" fill="#1a56db"/>
+
+  <!-- Lightning bolt -->
+  <polygon points="26,4 14,24 21,24 18,44 32,20 24,20" fill="white"/>
+</svg>
