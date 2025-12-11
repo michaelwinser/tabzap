@@ -13,9 +13,44 @@ function onCompleted(details) {
 }
 
 function onClicked(tab) {
-    chrome.alarms.clear(ALARM_NAME);
-    globalQueue.clear();
-    clearBadge();
+    if (globalQueue.size > 0) {
+        // During countdown: cancel pending removals
+        chrome.alarms.clear(ALARM_NAME);
+        globalQueue.clear();
+        clearBadge();
+    } else {
+        // No countdown active: scan and remove all duplicates in window
+        scanAndRemoveDuplicates(tab.windowId);
+    }
+}
+
+function scanAndRemoveDuplicates(windowId) {
+    chrome.tabs.query({ windowId: windowId }, function(tabs) {
+        // Sort by index to ensure leftmost tabs are kept
+        tabs.sort((a, b) => a.index - b.index);
+
+        const seen = new Map(); // normalized URL -> first tab id
+        const duplicates = [];
+
+        for (const tab of tabs) {
+            if (isIgnoredUrl(tab.url)) {
+                continue;
+            }
+
+            const normalizedUrl = getUrlForComparison(tab.url);
+
+            if (seen.has(normalizedUrl)) {
+                duplicates.push(tab.id);
+            } else {
+                seen.set(normalizedUrl, tab.id);
+            }
+        }
+
+        if (duplicates.length > 0) {
+            chrome.tabs.remove(duplicates);
+            console.log("Removed %d duplicate tabs", duplicates.length);
+        }
+    });
 }
 
 function removeDuplicateTabs(tab) {
