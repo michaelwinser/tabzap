@@ -19,15 +19,26 @@ function onClicked(tab) {
         globalQueue.clear();
         clearBadge();
     } else {
-        // No countdown active: scan and remove all duplicates in window
+        // No countdown active: scan and remove all duplicates
         scanAndRemoveDuplicates(tab.windowId);
     }
 }
 
-function scanAndRemoveDuplicates(windowId) {
-    chrome.tabs.query({ windowId: windowId }, function(tabs) {
-        // Sort by index to ensure leftmost tabs are kept
-        tabs.sort((a, b) => a.index - b.index);
+function scanAndRemoveDuplicates(currentWindowId) {
+    const query = globalConfig.scope === "all" ? {} : { windowId: currentWindowId };
+
+    chrome.tabs.query(query, function(tabs) {
+        // Sort by windowId first, then by index to ensure leftmost tabs are kept
+        // When scope is "all", tabs in the current window get priority
+        tabs.sort((a, b) => {
+            if (globalConfig.scope === "all") {
+                // Prioritize current window, then by index
+                const aInCurrent = a.windowId === currentWindowId ? 0 : 1;
+                const bInCurrent = b.windowId === currentWindowId ? 0 : 1;
+                if (aInCurrent !== bInCurrent) return aInCurrent - bInCurrent;
+            }
+            return a.index - b.index;
+        });
 
         const seen = new Map(); // normalized URL -> first tab id
         const duplicates = [];
@@ -61,10 +72,11 @@ function removeDuplicateTabs(tab) {
     console.log("removeDuplicateTabs(%s)", tab.id);
 
     var urlForComparison = getUrlForComparison(tab.url);
+    var query = globalConfig.scope === "all" ? {} : { windowId: tab.windowId };
 
-    chrome.tabs.query({ windowId: tab.windowId }, function(tabs) {
+    chrome.tabs.query(query, function(tabs) {
         var duplicates = tabs.filter(function(potentialDupTab) {
-            if (tab.id == potentialDupTab.id || tab.pinned) {
+            if (tab.id == potentialDupTab.id || potentialDupTab.pinned) {
                 return false;
             }
 

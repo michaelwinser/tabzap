@@ -1,6 +1,8 @@
 // Regular expressions need to be stored as strings, not the /exp/ notation
 
 var defaultConfig = {
+    // Scope: "window" (current window only) or "all" (all windows)
+    scope: "window",
     ignorePatterns: [
         "^view-source:/",
         "^chrome://",
@@ -39,7 +41,7 @@ var defaultConfig = {
 }
 
 function configGetEmpty() {
-    return { ignorePatterns: [], urlPatterns: []};
+    return { scope: "window", ignorePatterns: [], urlPatterns: []};
 }
 function configGetDefaults() {
     return JSON.parse(JSON.stringify(defaultConfig));

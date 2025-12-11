@@ -11,6 +11,7 @@ function isNotBlankString(s) {
 
 function save() {
     var config = configGetEmpty();
+    config.scope = document.getElementById("scope").value;
     config.ignorePatterns = document.getElementById("ignorepatterns").value.split("\n").filter(isNotBlankString);
     config.urlPatterns = document.getElementById("urlpatterns").value.split("\n").filter(isNotBlankString);
     configSave(config)
@@ -19,6 +20,7 @@ function save() {
 
 function load() {
     configLoad(function(config) {
+        document.getElementById("scope").value = config.scope || "window";
         document.getElementById("ignorepatterns").value = config.ignorePatterns.filter(isNotBlankString).join("\n");
         document.getElementById("urlpatterns").value = config.urlPatterns.filter(isNotBlankString).join("\n");
     })
