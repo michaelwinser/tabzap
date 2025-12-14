@@ -1,0 +1,10 @@
+TabZapDups automatically closes duplicate tabs to keep your browser clean and organized.
+
+When you open a link that's already open in another tab, TabZapDups detects the duplicate and closes it after a brief delay. Click the extension icon to cancel if needed.
+
+Features:
+- Automatic duplicate tab detection
+- 5-second delay before closing (cancel anytime)
+- Customizable URL matching patterns
+- Ignore patterns for specific sites
+- Settings sync across devices
